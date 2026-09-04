@@ -26,6 +26,7 @@
     const assetIds=[...new Set(out.assets.map(x=>x?.assetID).filter(Boolean))];for(let i=0;i<assetIds.length;i+=4){const rs=await Promise.all(assetIds.slice(i,i+4).map(async id=>{try{const r=await api('/api/v1/asset/asset360view/'+encodeURIComponent(id));return r.json?{source:'asset360view',assetID:id,data:r.json}:null}catch(e){out.errors.push('360 '+id+': '+e);return null}}));rs.filter(Boolean).forEach(x=>out.details.push(x))}
     return{...out,expected,groupIds,finished:new Date().toISOString()};
   }
-  const network=[];window.addEventListener('message',e=>{if(e.source===window&&e.data?.source===SOURCE){network.push(e.data.payload);if(network.length>2000)network.shift()}});
+  const network=[];window.addEventListener('message',e=>{if(e.source===window&&e.data?.source===SOURCE){const p=e.data.payload;network.push(p);if(network.length>2000)network.shift();chrome.runtime.sendMessage({cmd:'recordNetwork',payload:p}).catch(()=>{})}});
+  setTimeout(()=>{if(looksSkybits())chrome.runtime.sendMessage({cmd:'recordPage'}).catch(()=>{})},1200);
   chrome.runtime.onMessage.addListener((m,s,send)=>{(async()=>{if(m?.cmd==='scanPage')return{kind:'page',snapshot:await snapshot(),network:network.slice()};if(m?.cmd==='scanInventory')return{kind:'inventory',...(await inventory())};if(m?.cmd==='isSkybits')return{skybits:looksSkybits(),url:location.href};throw Error('Unknown command')})().then(send).catch(e=>send({error:String(e)}));return true});
 })();
