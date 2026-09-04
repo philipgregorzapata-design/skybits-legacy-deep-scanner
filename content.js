@@ -10,7 +10,7 @@
     const scripts=[...document.scripts].map(s=>({src:abs(s.src),type:s.type||'',inline:s.src?'':String(s.textContent||'').slice(0,20000)}));
     const forms=[...document.forms].map(f=>({action:abs(f.action),method:f.method,inputs:[...f.elements].map(e=>({name:e.name,id:e.id,type:e.type,value:e.type==='password'?'[redacted]':String(e.value||'').slice(0,500)}))}));
     const storage={local:{},session:{}};
-    for(const[k,obj]of[['local',localStorage],['session',sessionStorage]]){try{for(let i=0;i<obj.length;i++){const k2=obj.key(i),v=String(obj.getItem(k2)||'');storage[kind=kind||k][k2]=/pass|token|secret|authorization|api[-_]?key/i.test(k2)?'[redacted]':v.slice(0,30000)}}catch(e){}}
+    for(const[k,obj]of[['local',localStorage],['session',sessionStorage]]){try{for(let i=0;i<obj.length;i++){const k2=obj.key(i),v=String(obj.getItem(k2)||'');storage[k][k2]=/pass|token|secret|authorization|api[-_]?key/i.test(k2)?'[redacted]':v.slice(0,30000)}}catch(e){}}
     let indexedDB=[];try{indexedDB=(await window.indexedDB.databases()).map(x=>({name:x.name,version:x.version}))}catch(e){}
     const endpointCandidates=new Set();const add=s=>{for(const m of String(s||'').matchAll(/(?:["'`])((?:\/api\/|api\/)[^"'`\\\s]{2,300})(?:["'`])/gi))endpointCandidates.add(m[1])};scripts.forEach(s=>add(s.inline));resources.forEach(r=>add(r.name));
     const scriptSamples=[];for(const u of scripts.map(s=>s.src).filter(u=>u&&new URL(u).origin===location.origin).slice(0,100)){try{const r=await fetch(u,{credentials:'include'}),t=await r.text();add(t);scriptSamples.push({url:u,status:r.status,length:t.length,apiHints:[...new Set(t.match(/\/api\/[^"'`\s)]+/gi)||[])].slice(0,500)})}catch(e){scriptSamples.push({url:u,error:String(e)})}}
